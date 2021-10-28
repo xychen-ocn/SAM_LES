@@ -279,19 +279,26 @@ class SAM_DataVisualize():
                         var = movmean(var, tsm_window)
 
                     ax.plot(t, var, '-', linewidth=lw, color=colors[i], label=qrt)
-    
-                plt.legend()
+                ax.legend()
                 ax.set_xlabel(nc.time.long_name + ' (' + nc.time.units +')' )
-                ax.set_ylabel( nc[varname].long_name + ' ('+ nc[varname].units +')' +'\n quartile mean')
-            
-            
+                #ax.set_ylabel( nc[varname].long_name + ' ('+ nc[varname].units +')' +'\n quartile mean')
+                ax.set_ylabel(varname + '\n quartile mean')      
             
             fig.tight_layout()
+
             if (figname_suff is None):
-                figname = self.caseID + '_TWP_quartile_mean_evolution_of_standard_variables.jpg'
+                if (tsm_window is not None):
+                    figname = self.caseID + '_TWP_quartile_mean_evolution_of_standard_variables' + \
+                        '_tsm{0:d}'.format(tsm_window) +'.jpg'
+                else:
+                    figname = self.caseID + '_TWP_quartile_mean_evolution_of_standard_variables.jpg'
+
             else:
-                figname = self.caseID + '_TWP_quartile_mean_evolution_of_'+ figname_suff +'.jpg'
-                
+                if (tsm_window is not None):
+                    figname = self.caseID + '_TWP_quartile_mean_evolution_of_'+ figname_suff +'_tsm{0:d}'.format(tsm_window) +'.jpg'
+                else:
+                    figname = self.caseID + '_TWP_quartile_mean_evolution_of_'+ figname_suff +'.jpg'
+                    
             
         else:
             # plot variable names direclty. 
@@ -307,13 +314,17 @@ class SAM_DataVisualize():
 
                 ax.plot(t, var, '-', linewidth=lw, color=colors[i], label=qrt)
             
-            plt.legend()
+            ax.legend()
             ax.set_xlabel(nc.time.long_name + ' (' + nc.time.units +')' )
-            ax.set_ylabel( nc[varname].long_name + ' ('+ nc[varname].units +')' +'\n quartile mean')
+            #ax.set_ylabel( nc[varname].long_name + ' ('+ nc[varname].units +')' +'\n quartile mean')
+            ax.set_ylabel(varname + '\n quartile mean')
 
             
-            figname = self.caseID + '_TWP_quartile_domain_mean_evolution_of_' + varname +'.jpg'
-            
+            if (tsm_window is not None):
+                figname = self.caseID + '_TWP_quartile_domain_mean_evolution_of_' + varname +'_tsm{0:d}.jpg'.format(tsm_window)
+            else:
+                figname = self.caseID + '_TWP_quartile_domain_mean_evolution_of_' + varname +'.jpg'
+
         
 
         

@@ -16,7 +16,6 @@ import os
 from tqdm import tqdm
 
 
-# In[31]:
 
 
 class SAM_DataProcess():
