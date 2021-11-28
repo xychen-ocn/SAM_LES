@@ -16,6 +16,7 @@ import os
 from tqdm import tqdm
 
 
+# In[31]:
 
 
 class SAM_DataProcess():
@@ -26,7 +27,24 @@ class SAM_DataProcess():
         self.path = '/data/xchen/SAM_LES_Orion'
              
     def block_averaging(self, nblock=64, domain_shape='square'):
-        ds_2D = self.nc
+        """ Purpose: this method is used to compute block average. 
+            note: I think I need to connect the first point with the end point as well 
+            (repeat the first column of points after the last column) for periodic boundary condition.
+            May not have significant influence on the ultimate result.
+        """
+        nc = self.nc
+        
+        # pad extra grid point column at the end of x and y (to represent periodic boundary condition)
+        ds_firstcolumn = nc.isel(x=0)
+        ds_firstcolumn.coords['x']=nc.x[-1].values+nc.x[1].values-nc.x[0].values
+        ds_firstcolumn.expand_dims(x=1)
+        nc_extx = xr.concat([nc, ds_firstcolumn],"x")
+        
+        ds_firstrow = nc_extx.isel(y=0)
+        ds_firstrow.coords['y']=nc_extx.y[-1].values+nc_extx.y[1].values-nc_extx.y[0].values
+        ds_firstrow.expand_dims(y=1)
+        ds_2D = xr.concat([nc_extx, ds_firstrow],"y")
+        
         
         # add one extra column of grid point at the end due to periodic boundary condition (?)
         domain_size = np.max(ds_2D.x) - np.min(ds_2D.x) 

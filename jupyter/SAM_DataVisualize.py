@@ -20,7 +20,7 @@ from matplotlib import cm
 import os 
 
 
-# In[124]:
+# In[1]:
 
 
 class SAM_DataVisualize():
@@ -37,7 +37,8 @@ class SAM_DataVisualize():
         # plot as color shading
         nc = self.nc
         z = self.nc['z']
-        time = self.nc['time'] * 24.  # hours
+        time_abs = self.nc['time']
+        time = (time_abs - time_abs[0])* 24.  # hours
         var_list = self.var;
         TT, ZZ = np.meshgrid(time, z)
       
@@ -101,14 +102,17 @@ class SAM_DataVisualize():
             
             
     
-    def domain_mean_profiles(self, var_list = None, tidx = [0, 20], ncol = 2, figsize=(12,10), 
+    def domain_mean_profiles(self, var_list = None, simThr = [0, 24], ncol = 2, figsize=(12,10), 
                              svfig = False, svdir =None, figname_suff=None):
         # Purpose: this function will plot the domain mean vertical profile 
+        # update: change the input argument "tidx" to simThr (simulation hour is easier to specify than the index.)
         nc = self.nc
         z = self.nc['z']      
         ZINV = nc['ZINV']*1000
-        time = self.nc['time'] * 24.  # hours
+        time = (self.nc['time']-self.nc['time'][0]) * 24.  # hours
         
+         
+                
         # plot the input list of variables:
         nrow = np.int32(np.ceil(len(var_list)/ncol))
         
@@ -119,9 +123,14 @@ class SAM_DataVisualize():
             val = nc[varname]
             
             hline = None
-            for it in tidx:
+            for t in simThr:
+                
+                # find the index for the simulation hours:
+                it = np.where(time==t)[0][0]
+                
                 ZINV_it = ZINV[it]
-                labelstr = 't={0:.0f}th hr'.format(time[it].values)
+
+                labelstr = 't={0:.1f}th hr'.format(time[it].values)
                 ax.plot(val[it,:],z, linestyle='-',linewidth=1.2, label=labelstr)
                 # add the inversion height at t = it
                 hzinv = ax.axhline(ZINV_it, linestyle='--',linewidth=1.0, color='gray', label='_nolegend_')
@@ -162,7 +171,7 @@ class SAM_DataVisualize():
         x = nc['x'] 
         y = nc['y']
         xx, yy = np.meshgrid(x, y)
-        time = nc['time'] * 24.  # hours
+        time = (nc['time']-nc['time'][0]) * 24.  # hours
         
         # plot the input list of variables:
         ncol = len(simThr)
@@ -186,7 +195,7 @@ class SAM_DataVisualize():
             for t, ax in zip(simThr, axes[iv].flatten()):
                 
                 # find the index for the simulation hours:
-                it = np.where(time==t)[0]
+                it = np.where(time==t)[0][0]
                 
                 labelstr = '{0:.0f}th hour'.format(t)
                 hc = ax.contourf(xx, yy, np.squeeze(val[it,:,:]), cmap=colormap
@@ -256,7 +265,7 @@ class SAM_DataVisualize():
         
         nc = self.nc
         var_list = self.var
-        t = nc.time
+        t = nc.time - nc.time[0]
         quartiles = nc.quartile.values
         
         colors=plt.cm.RdBu(np.linspace(0,1, len(quartiles)))
@@ -275,30 +284,23 @@ class SAM_DataVisualize():
                     
                     #if smoothing is requested for the time evolution:
                     if (tsm) and (tsm_window is not None):
-                        t = movmean(nc.time, tsm_window)
+                        t = movmean(nc.time - nc.time[0], tsm_window)
                         var = movmean(var, tsm_window)
 
                     ax.plot(t, var, '-', linewidth=lw, color=colors[i], label=qrt)
-                ax.legend()
+    
+                plt.legend()
                 ax.set_xlabel(nc.time.long_name + ' (' + nc.time.units +')' )
-                #ax.set_ylabel( nc[varname].long_name + ' ('+ nc[varname].units +')' +'\n quartile mean')
-                ax.set_ylabel(varname + '\n quartile mean')      
+                ax.set_ylabel( nc[varname].long_name + ' ('+ nc[varname].units +')' +'\n quartile mean')
+            
+            
             
             fig.tight_layout()
-
             if (figname_suff is None):
-                if (tsm_window is not None):
-                    figname = self.caseID + '_TWP_quartile_mean_evolution_of_standard_variables' + \
-                        '_tsm{0:d}'.format(tsm_window) +'.jpg'
-                else:
-                    figname = self.caseID + '_TWP_quartile_mean_evolution_of_standard_variables.jpg'
-
+                figname = self.caseID + '_TWP_quartile_mean_evolution_of_standard_variables.jpg'
             else:
-                if (tsm_window is not None):
-                    figname = self.caseID + '_TWP_quartile_mean_evolution_of_'+ figname_suff +'_tsm{0:d}'.format(tsm_window) +'.jpg'
-                else:
-                    figname = self.caseID + '_TWP_quartile_mean_evolution_of_'+ figname_suff +'.jpg'
-                    
+                figname = self.caseID + '_TWP_quartile_mean_evolution_of_'+ figname_suff +'.jpg'
+                
             
         else:
             # plot variable names direclty. 
@@ -309,22 +311,18 @@ class SAM_DataVisualize():
                 
                 #if smoothing is requested for the time evolution:
                 if (tsm) and (tsm_window is not None):
-                    t = movmean(nc.time, tsm_window)
+                    t = movmean(nc.time - nc.time[0], tsm_window)
                     var = movmean(var, tsm_window)
 
                 ax.plot(t, var, '-', linewidth=lw, color=colors[i], label=qrt)
             
-            ax.legend()
+            plt.legend()
             ax.set_xlabel(nc.time.long_name + ' (' + nc.time.units +')' )
-            #ax.set_ylabel( nc[varname].long_name + ' ('+ nc[varname].units +')' +'\n quartile mean')
-            ax.set_ylabel(varname + '\n quartile mean')
+            ax.set_ylabel( nc[varname].long_name + ' ('+ nc[varname].units +')' +'\n quartile mean')
 
             
-            if (tsm_window is not None):
-                figname = self.caseID + '_TWP_quartile_domain_mean_evolution_of_' + varname +'_tsm{0:d}.jpg'.format(tsm_window)
-            else:
-                figname = self.caseID + '_TWP_quartile_domain_mean_evolution_of_' + varname +'.jpg'
-
+            figname = self.caseID + '_TWP_quartile_domain_mean_evolution_of_' + varname +'.jpg'
+            
         
 
         
@@ -358,4 +356,10 @@ class SAM_DataVisualize():
         
         
         
+
+
+# In[ ]:
+
+
+
 
