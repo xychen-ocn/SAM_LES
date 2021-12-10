@@ -31,7 +31,7 @@ class SAM_DataVisualize():
         self.path = '/data/xchen/SAM_LES_Orion'
         
         
-    def domain_mean_evolution(self, varname = None, colormap= 'viridis', svfig = False, 
+    def domain_mean_evolution(self, varname = None, colormap= 'viridis', zmax= 4000, svfig = False, 
                               svdir = None, figsize = (14,10),figname_suff=None):
         # Purpose: this function is for plotting data in ds_stat to show how it varies in height and time;
         # plot as color shading
@@ -62,6 +62,7 @@ class SAM_DataVisualize():
                 # set up the colorbar:
                 hb = plt.colorbar(hm, ax=ax)
                 hb.ax.set_title(nc[varname].units)
+                ax.set_ylim(0, zmax)
             
             fig.tight_layout()
             if (figname_suff is None):
@@ -83,6 +84,7 @@ class SAM_DataVisualize():
             # set up the colorbar:
             hb = plt.colorbar(hm, ax=ax)
             hb.ax.set_title(nc[varname].units)
+            ax.set_ylim(0, zmax)
             
             figname = self.caseID + '_domain_mean_evolution_of_' + varname +'.jpg'
             
@@ -102,7 +104,7 @@ class SAM_DataVisualize():
             
             
     
-    def domain_mean_profiles(self, var_list = None, simThr = [0, 24], ncol = 2, figsize=(12,10), 
+    def domain_mean_profiles(self, var_list = None, simThr = [0, 24], zmax=4000, ncol = 2, figsize=(12,10), 
                              svfig = False, svdir =None, figname_suff=None):
         # Purpose: this function will plot the domain mean vertical profile 
         # update: change the input argument "tidx" to simThr (simulation hour is easier to specify than the index.)
@@ -126,7 +128,10 @@ class SAM_DataVisualize():
             for t in simThr:
                 
                 # find the index for the simulation hours:
-                it = np.where(time==t)[0][0]
+                #it = np.where(time==t)[0][0]
+                # update to make it find the closest time stamp.
+                timedif = np.abs(time-t)
+                it = np.where(timedif == np.min(timedif))[0][0]
                 
                 ZINV_it = ZINV[it]
 
@@ -137,6 +142,7 @@ class SAM_DataVisualize():
           
             ax.set_xlabel(nc[varname].long_name + '(' + nc[varname].units + ')')
             ax.set_ylabel('Height (m)')
+            ax.set_ylim(0, zmax)
             ax.legend()
             
 
@@ -177,9 +183,12 @@ class SAM_DataVisualize():
         ncol = len(simThr)
         nrow = len(var_list)
         
+        width_ratio = np.ones(ncol)
+        width_ratio[-1] = 1.25
+        
         
         fig, axes = plt.subplots(nrow, ncol, figsize=figsize, 
-                                 gridspec_kw={'width_ratios':[1,1,1,1.25]})
+                                 gridspec_kw={'width_ratios':width_ratio})
 
         # time in coloumns
         # variable in rows:          
@@ -195,7 +204,9 @@ class SAM_DataVisualize():
             for t, ax in zip(simThr, axes[iv].flatten()):
                 
                 # find the index for the simulation hours:
-                it = np.where(time==t)[0][0]
+                #it = np.where(time==t)[0][0]
+                timedif = np.abs(time-t)
+                it = np.where(timedif == np.min(timedif))[0][0]
                 
                 labelstr = '{0:.0f}th hour'.format(t)
                 hc = ax.contourf(xx, yy, np.squeeze(val[it,:,:]), cmap=colormap
