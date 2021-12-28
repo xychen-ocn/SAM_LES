@@ -5,11 +5,12 @@
 % note, the grd level specified here is the mid-levels (in meters) for the
 % Arakawa-C grid, not the interfacial level. 
 
-optname = 'discrete';
-dz = 40;
+clear all; close all;
+optname = 'streched';
+dz = 40;           % units: m (same for the rest of the height related params)
 zmid0= 20;
 PBL_lev = 4E3;
-domain_top = 20E3;
+domain_top = 6E3;
 
 %% method 1: set different resolution in different layers:
 if strcmp(optname,'discrete')
@@ -27,6 +28,7 @@ if strcmp(optname,'discrete')
     %z_mid_upper = z_mid_tropo(end):vres(3):domain_top;
     
     z_mid_all = unique([layers.zmid]);
+    grid_parm = [num2str(len(vres)) 'vertRes'];
     
     %% method 2: stretching vertical resolution above certain level:
 elseif strcmp(optname,'streched')
@@ -34,12 +36,13 @@ elseif strcmp(optname,'streched')
     strcoeff=1.05;
     z_mid_PBL = zmid0:dz:PBL_lev;
     i = 2;
+    z_mid_upper=[];
     z_mid_upper(1) = z_mid_PBL(end);
     
     while i>0
         z_mid_upper(i) = z_mid_upper(i-1) + dz*strcoeff^(i-1);
         dz_streched(i-1) = dz*strcoeff^(i-1);
-        if z_mid_upper(i)>domain_top
+        if z_mid_upper(i)>=domain_top
             break
         else
             i=i+1;
@@ -47,6 +50,8 @@ elseif strcmp(optname,'streched')
     end
     
     z_mid_all = unique([z_mid_PBL, z_mid_upper]);
+    grid_parm = num2str(strcoeff*100);
+
 end
 
 %% make a plot to confirm:
@@ -72,7 +77,7 @@ svdir = ['/Users/xchen/Documents/GitHub/SAM_LES/input'];
 if ~exist(svdir,'dir')
     mkdir(svdir)
 end
-grd_FN = ['grd_domain_top' num2str(domain_top/1E3) 'km'];
+grd_FN = ['grd_dz' num2str(dz) 'm' '_' num2str(domain_top/1E3) 'km' '_' optname '_' grid_parm];
 fid = fopen([svdir filesep grd_FN ],'w');
 fprintf(fid,'%6.1f\n',z_mid_all);
 fclose(fid)
