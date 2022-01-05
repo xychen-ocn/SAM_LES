@@ -35,8 +35,8 @@ def cross_spectrum(XX, YY, dx, dy, opt= False):
     Xfft = np.fft.fft2(XX, axes=(1, 2))
     Yfft = np.fft.fft2(YY, axes=(1, 2))
     # normalize by # time samples
-    #Xfft = Xfft / (NM * NL)
-    #Yfft = Yfft / (NM * NL)
+    Xfft = Xfft / (NM * NL)
+    Yfft = Yfft / (NM * NL)
     # shift 0 frequency and 0 wavenumber to the center
     Xfft = np.fft.fftshift(Xfft, axes=(1, 2))
     Yfft = np.fft.fftshift(Yfft, axes=(1, 2))
@@ -236,7 +236,7 @@ def omnidirectional_wavenumber_spectrum(Sin, kx, ky, dx, dy, checkflag=True):
         pnts = np.zeros([np.size(HH),2])
         pnts[:,0] = np.reshape(HH,[np.size(HH)])
         pnts[:,1] = np.reshape(KK,[np.size(KK)])
-        S_kth_filled = intp.griddata(gridin, S_kth_valid, pnts, method='cubic')
+        S_kth_filled = intp.griddata(gridin, S_kth_valid, pnts, method='linear')
         #print(np.shape(S_kth_filled))
         
         S_kth_filled = np.reshape(S_kth_filled, [nk, nth])
@@ -270,12 +270,38 @@ def omnidirectional_wavenumber_spectrum(Sin, kx, ky, dx, dy, checkflag=True):
                 fig.tight_layout()
         
         
-    PK[it,:] =  Sk_filled
+        PK[it,:] =  Sk_filled
     
     return {'PK': PK, 'wvnum': wn_bins, 'wvlen': 2*np.pi/wn_bins}
 
 
 def compute_Ogive_Length(Pk, k):
+    """
+    This function compute the Ogive length, which is the length scale shorter than which 
+    accounts for 2/3 of the total power. (2/3 of the variance comes from wavenumber larger than this scale)
+    Inputs:
+        Pk: wavenumber spectrum (with dim. [NT, NK])
+        k: wavenumber bins
+    OutPuts: Ogive length in meters
+    """
+    NT, NK = np.shape(Pk)
+    Stot=np.zeros([NT,NK])
+    for i in np.arange(1,NK,dtype=np.int32):
+        Stot[:,i] = np.trapz( Pk[:,0:i], k[0:i], axis=1)
+
     
-    return L_Ogive
+    #%  ---  find the critical wavenumber using Ogive. --- 
+    LOgive=np.zeros(NT)
+    for it in range(NT):
+        uq_Stot, uq_ids= np.unique(np.log10(Stot[it,:]), return_index=True)
+        uq_k = k[uq_ids]
+        F = intp.interp1d(10**uq_Stot, np.log10(uq_k), kind='linear',fill_value='extrapolate')
+        kc_exponent = F(1/3*Stot[it, -1])
+        kc = 10**kc_exponent   # 2/3 of the variance comes from wavenumber larger than kc.
+        #print(kc)
+        LOgive[it] = 2*np.pi/kc
+        
+
+    
+    return LOgive
     
