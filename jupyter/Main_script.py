@@ -32,22 +32,31 @@ import os
 
 # read in data:
 #DataRoot = '/data/xchen/SAM_LES_Orion'
-DataRoot = '/work/noaa/ome/xychen'
+#DataRoot = '/work/noaa/ome/xychen'
+DataRoot = '/work2/noaa/ome/xychen'
 CaseFolder = 'SAM_UW_RICO'
 #CaseFolder = 'RICO_RRTM4PBL_1.5day'
 #CaseFolder = 'RICO_RRTM_3day'
 DataPath = os.path.join(DataRoot, CaseFolder)
 
+# time of interests:
+#ts = np.arange(6,36,6)
+ts = np.arange(12,80,12)
+
+
 figlocdir = 'Figs'    # this will create a local folder name "Figs" under the datapath;
 
 SubFolders = dict()
 SubFolders['2D'] = 'OUT_2D'
-SubFolders['3D'] = 'OUT_3D'
+#SubFolders['3D'] = 'OUT_3D'
 SubFolders['STAT'] = 'OUT_STAT'
 
 #caseID = 'RICO_RRTM_128x128x285_dx100m_standard_test_RRTM_20E3'
-caseID = 'RICO_128x128x120_dx100m_standard_test_RRTM4PBL_radON'
+caseID = 'RICO_128x128x126_dx100m_DomainTop6km_RRTM4PBL_radon_perpetualsun'
+#caseID = 'RICO_128x128x120_dx100m_standard_test_RRTM4PBL_radON'
+#caseID = 'RICO_128x128x120_dx100m_standard_test_RRTM4PBL_radOFF'
 #caseID = 'RICO_128x128x120_dx100m_standard_test_RRTM4PBL_radon_perpetualsun'
+#caseID = 'RICO_512x512x120_dx250m_largedomain_test_RRTM4PBL_radON_realistic'
 
 # number of processors for this run:
 ncpu = 64 
@@ -142,13 +151,12 @@ out_stat.domain_mean_profiles(var_list = init_key_vars, simThr = [0, 72],ncol=4,
 ## ------- out_2D ------------ ##
 # plot domain evolution of vertically integrated (or 2D) quantities:
 var_list = ['PW','logCWP', 'TB']
-ts = np.arange(12,80,12)
 out_2D.spatial_map(var_list = var_list, zlev=0, ColIntFlag=True, simThr=ts, figsize=(12.5,6), 
                  colormap=cm.Blues,svfig=True, svdir=figlocdir, figname_suff='PW_CWP_TB')
 
 
 # In[12]:
-ts = np.arange(12,80,12)
+#ts = np.arange(12,80,12)
 
 # In[ ]:
 
@@ -162,39 +170,19 @@ ts = np.arange(12,80,12)
 # In[16]:
 
 
-# -- Block averaging and quartile sorted variables:
+
+# In[19]:
 
 out_2D_datap = SAM_DataProcess()
 out_2D_datap.path = out_2D.path
 out_2D_datap.caseID = out_2D.caseID
 out_2D_datap.nc = ds_2D
 
-# call into the block averaging and quartile sorted function/method
-nblock=64 
-ds_blockave_obj = out_2D_datap.block_averaging
-
-
-# In[17]:
-
-
-ds_blockave=ds_blockave_obj()
-
-
-# In[18]:
-
-
-TWP_bins=np.percentile(ds_blockave.TWP, np.linspace(0,100,5))
-TWP_bin_labels = ['Q1','Q2','Q3','Q4']
-out_2D_datap.nc = ds_blockave
-ds_qrtave = out_2D_datap.TWPsorted_quartile_statistics(TWP_bins=TWP_bins, TWP_bin_labels = TWP_bin_labels)
-
-
-# In[19]:
-
 
 tmpdir = './tmp_data'
-filename = tmpdir + out_2D_datap.caseID + '_quartile_mean_ds_for_testing_updated_3days.nc'
-ncexist_flag = os.path.exists(filename)
+filename = out_2D_datap.caseID + '_quartile_mean_ds.nc'
+absFN = os.path.join(tmpdir, filename)
+ncexist_flag = os.path.exists(absFN)
 #
 
 
@@ -202,9 +190,24 @@ ncexist_flag = os.path.exists(filename)
 
 
 if ncexist_flag:
-    ds_qrtave = xr.open_dataset(filename)
+    ds_qrtave = xr.open_dataset(absFN)
 else:
-    ds_qrtave.to_netcdf(filename)
+    # -- Block averaging and quartile sorted variables:
+
+    # call into the block averaging and quartile sorted function/method
+    nblock=64 
+    ds_blockave_obj = out_2D_datap.block_averaging
+
+    ds_blockave=ds_blockave_obj()
+
+
+    TWP_bins=np.percentile(ds_blockave.TWP, np.linspace(0,100,5))
+    TWP_bin_labels = ['Q1','Q2','Q3','Q4']
+    out_2D_datap.nc = ds_blockave
+    ds_qrtave = out_2D_datap.TWPsorted_quartile_statistics(TWP_bins=TWP_bins, TWP_bin_labels = TWP_bin_labels)
+
+
+    ds_qrtave.to_netcdf(absFN)
 
 
 # In[ ]:
@@ -239,8 +242,8 @@ qrtds = SAM_DataVisualize()
 
 # initialize data
 qrtds.nc = ds_qrtave
-#qrtds.var = ['PW','CWP','ZC']
-qrtds.var = ['PW']
+qrtds.var = ['PW','CWP','ZC']
+#qrtds.var = ['PW']
 qrtds.path = out_2D_datap.path
 qrtds.caseID = out_2D_datap.caseID
 
@@ -259,7 +262,7 @@ print('smoothing over {0:.0f} points'.format(nt))
 # In[25]:
 
 
-qrtds.quartile_evolution(tsm=True, tsm_window=nt, figsize=(12,6), svfig=True, svdir = figlocdir)
+qrtds.quartile_evolution(varname='PW', tsm=True, tsm_window=nt, figsize=(12,6), svfig=True, svdir = figlocdir)
 
 
 # In[ ]:
