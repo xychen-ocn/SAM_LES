@@ -1,4 +1,4 @@
-#! /home/xychen/env/default/bin/python3
+#! /home/xychen/miniconda3/bin/python3
 
 import xarray as xr
 import numpy as np
@@ -9,15 +9,21 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import os
 
-
+datadir = './tmp_data'
 netCDF_FN=dict()
-netCDF_FN['contrl']='tmp_dataRICO_128x128x120_dx100m_standard_test_RRTM4PBL_radON_higher_sounding_quartile_mean_ds_for_testing_updated_3days.nc'
-netCDF_FN['large']='tmp_dataRICO_512x512x120_dx250m_largedomain_test_RRTM4PBL_radON_realistic_higher_sounding_quartile_mean_ds.nc'
+netCDF_FN['MPDATA']='RICO_512x512x126_dx250m_largedomain6km_ADV_MPDATA_RRTM4PBL_perpetualsun_32x32gc_quartile_mean_ds.nc'
+netCDF_FN['SELPPM']='RICO_512x512x126_dx250m_largedomain6km_test_RRTM4PBL_radon_perpetualsun_32x32gc_quartile_mean_ds.nc'
+
+abs_svpath='/home/xychen/GitHub_repo/SAM_LES/Figs/local/RadOn_Perpetual_Top6km_2days'
+figname='PW_quartile_evolution_comparison_MPDATA_SELPPM.jpg'
 
 # read both:
 ds_rad=dict()
-ds_rad['contrl']= xr.open_dataset(netCDF_FN['contrl'])
-ds_rad['large'] = xr.open_dataset(netCDF_FN['large'])
+for key in netCDF_FN:
+    ds_rad[key] = xr.open_dataset(os.path.join(datadir, netCDF_FN[key]))
+    
+#ds_rad['contrl']= xr.open_dataset(netCDF_FN['contrl'])
+#ds_rad['large'] = xr.open_dataset(netCDF_FN['large'])
 
 
 # In[7]:
@@ -25,7 +31,7 @@ ds_rad['large'] = xr.open_dataset(netCDF_FN['large'])
 
 
 # plot variable names direclty. 
-dt = (ds_rad['contrl'].time[1]-ds_rad['contrl'].time[0])*24
+dt = (ds_rad[key].time[1]-ds_rad[key].time[0])*24
 nt = int(2/dt)
 tsm_window=nt
 varname='PW'
@@ -62,8 +68,6 @@ for k, key in enumerate(ds_rad):
 
 fig.tight_layout()
 # save the two figures:
-abs_svpath='/home/xychen/GitHub_repo/SAM_LES/Figs/demo'
-figname='PW_quartile_1day_evolution_contrl_vs_largedomain_updated.jpg'
 abs_figname = os.path.join(abs_svpath, figname)
 fig.savefig(abs_figname)
 
