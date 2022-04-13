@@ -13,6 +13,21 @@ categories: research-notes
       * issue 1: slow regridding 
       * issue 2: the number of data in the span-wise direction varies across the stream-wise direction. 
 
+### 2. spectrum and co-spectrum analysis:
+| variables  | Reference |
+| ---------- | --------- |
+| qtot (total water) | BB2017 Fig 16 |
+| ---------- | --------- |
+| qtot and buoyant turbulence kinetic energy (TKE_b) |    Pornampai et al.(2021)  |
+|/ buoyancy production term in momentum budget equation | Fig 6, and in Appendix. |
+| ---------- | --------- |
+| w, theta,       | jonker et al. (1999)  |
+| top-down, bottom-up scalar  | Fig 2 & Fig 4 |
+| ---------- | --------- |
+| spectra and co-spectra of  | De Roode (2004) |
+| td, bu scalar; w and virtual potential temperature |  Fig 8 | 
+
+
 # Questions I have:
 ### 1. How long does it take cloud characteristics to change in response to the SST anomaly forcings?
 
